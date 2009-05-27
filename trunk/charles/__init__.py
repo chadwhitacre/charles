@@ -4,11 +4,13 @@ import errno
 import logging
 import os
 import signal
+import sys
 import time
 
 
 __version__ = '0.1'
 log = logging.getLogger('charles.ipc')
+WINDOWS = 'win32' in sys.platform
 
 
 # Fault-tolerant kill

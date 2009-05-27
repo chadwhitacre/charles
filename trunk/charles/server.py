@@ -45,7 +45,6 @@ class Server(BaseServer):
         log.warn("starting on %s" % str(self.settings.CHARLES_ADDRESS))
    
         if self.settings.DEBUG:
-            import pdb; pdb.set_trace()
             log.info("configuring filesystem monitor")
             paths = []
             for path in paths:
