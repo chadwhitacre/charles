@@ -17,6 +17,7 @@ from charles.ipc.pidfile import PIDFile
 from charles.server import Server
 
 
+logging.basicConfig(level='debug')
 log = logging.getLogger('charles')
 
 

@@ -10,9 +10,7 @@ from charles.wsgiserver import CherryPyWSGIServer as BaseServer
 from django.core.handlers.wsgi import WSGIHandler
 
 
-logging.basicConfig()
 log = logging.getLogger('charles.server')
-
 
 
 class Server(BaseServer):
