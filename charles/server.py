@@ -5,8 +5,10 @@ import socket
 import sys
 import traceback
 
+import charles
 import django
-from charles import __version__, restarter, settings
+from charles import __version__, restarter
+from charles import settings as charles_settings
 from charles.wsgiserver import CherryPyWSGIServer as BaseServer
 from django.conf import settings as django_settings
 from django.core.handlers.wsgi import WSGIHandler
@@ -21,16 +23,19 @@ class Server(BaseServer):
         """Extend to take a Django settings object.
         """
 
-        self.version = "Django-%s/Charles-%s" % ( django.get_version()
-                                                , __version__
-                                                 )
+        django_version = "Django/%s" % django.get_version()
+        charles_version = "Charles/%s" % __version__
+        self.version = ', '.join(( django_version
+                                 , charles_version
+                                 , self.version
+                                  ))
 
         # super() vs. BaseClass.__init__():
         # http://mail.python.org/pipermail/python-list/2006-February/367002.html
         BaseServer.__init__( self
-                           , settings.ADDRESS
+                           , charles_settings.ADDRESS
                            , WSGIHandler()
-                           , settings.THREADS
+                           , charles_settings.THREADS
                             )
     
         atexit.register(self.stop)
@@ -39,7 +44,7 @@ class Server(BaseServer):
     def start(self):
         """Extend to support filesystem monitoring.
         """
-        log.warn("starting on %s" % str(settings.ADDRESS))
+        log.warn("starting on %s" % str(charles_settings.ADDRESS))
    
         if django_settings.DEBUG:
             log.info("configuring filesystem monitor")
@@ -58,10 +63,10 @@ class Server(BaseServer):
         log.debug("cleaning up server")
         sys.stdout.flush()
         BaseServer.stop(self)
-        if 'win' not in sys.platform: 
-            if settings.SOCKFAM == socket.AF_UNIX: # prune socket
+        if not charles.WINDOWS: 
+            if charles_settings.SOCKFAM == socket.AF_UNIX: # prune socket
                 try:
-                    os.remove(settings.ADDRESS)
+                    os.remove(charles_settings.ADDRESS)
                 except EnvironmentError, exc:
                     log.error("error removing socket:", exc.strerror)
         # pidfile removed in __init__.py:main_loop
