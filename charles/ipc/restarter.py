@@ -108,7 +108,7 @@ import threading
 import time
 
 import charles
-from charles import kill_nicely, log, get_signame
+from charles.ipc import kill_nicely, log, get_signame
 
 
 try:
@@ -124,6 +124,7 @@ CHILD = _FLAG in os.environ         # True w/in child process
 PARENT = not CHILD                  # True w/in parent process
 EX_TEMPFAIL = 75                    # child's exit code to trigger restart
 MONITORING = False                  # whether we are monitoring the filesystem
+SLEEP = 1.0                         # seconds between filesystem checks
 child = None                        # our only child
 SIGNAL = None                       # the signal we are handling; pass to child
 
@@ -231,21 +232,19 @@ def _monitor_filesystem():
 
 
     while not _monitor.stop.isSet():
-        print "checking"
         for module in sys.modules.values():                 # module files
             filepath = getattr(module, '__file__', None)
             if filepath is None:
                 continue # @@: really just ignore this? when would this happen?
             filepath = filepath.endswith(".pyc") and filepath[:-1] or filepath
             if has_changed(filepath):
-                import pdb; pdb.set_trace()
                 return # triggers restart
 
         for filepath in _FILES:                             # additional files
             if has_changed(filepath):
                 return # triggers restart
 
-        time.sleep(0.5)
+        time.sleep(SLEEP)
 
 
 def _initialize():

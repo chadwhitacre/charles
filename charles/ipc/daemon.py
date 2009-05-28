@@ -14,9 +14,8 @@ import signal
 import sys
 import time
 
-from aspen.ipc import kill_nicely, log
-from aspen.ipc.pidfile import ErrorState, StaleState, State
-from aspen.ipc.pidfile import PIDFileMissing, PIDDead, PIDNotAspen
+from charles.ipc import kill_nicely, log
+from charles.ipc.pidfile import PIDFileMissing, StaleState
 
 
 try:
@@ -24,13 +23,17 @@ try:
 except AttributeError:
     DEV_NULL = "/dev/null"
 
-SLEEP = 0.5
+SLEEP = 1.0
 
 
 class Daemon(object):
-    
-    def __init__(self, configuration):
-        self.configuration = configuration
+
+    def __init__(self, pidfile, root):
+        """Takes a PIDFile and a filesystem path.
+        """
+        self.pidfile = pidfile
+        self.root = root
+
 
     def daemonize(self):
         """Double-fork; forego a controlling terminal FOREVER.
@@ -46,7 +49,7 @@ class Daemon(object):
             # Wait for pidfile to appear.
             # ===========================
 
-            while not os.path.isfile(self.configuration.pidfile.path):
+            while not os.path.isfile(self.pidfile.path):
                 log.debug("waiting for start ...")
                 time.sleep(SLEEP)
 
@@ -64,7 +67,7 @@ class Daemon(object):
             if pid != 0:        # parent
                 os._exit(0)
             else:               # child
-                os.chdir(self.configuration.paths.root)
+                os.chdir(self.root)
                 os.umask(0)
 
 
@@ -122,8 +125,8 @@ class Daemon(object):
 
 
     def start(self):
-        logdir = os.path.join(self.configuration.paths.root, '__', 'var')
-        log_path = os.path.join(logdir, 'aspen.log')
+        logdir = os.path.join(self.root)
+        log_path = os.path.join(logdir, 'django.log')
         if not os.path.isdir(logdir):
             os.makedirs(logdir, 0755)
         self.log_path = log_path
@@ -131,12 +134,12 @@ class Daemon(object):
         signal.signal(signal.SIGHUP, self.sighup)
 
     def stop(self):
-        child_pid = self.configuration.pidfile.getpid()
+        child_pid = self.pidfile.getpid()
         died_nicely = kill_nicely(child_pid, is_our_child=False)
         retcode = int(not died_nicely)
         while 1:
             try:
-                self.configuration.pidfile.getpid()
+                self.pidfile.getpid()
             except PIDFileMissing:
                 break
             log.debug('waiting for stop ...')
@@ -144,62 +147,15 @@ class Daemon(object):
         return retcode
 
     def restart(self):
-        child_pid = self.configuration.pidfile.getpid() # raise pid errors
+        child_pid = self.pidfile.getpid() # raise pid errors
         new_child_pid = child_pid
         os.kill(child_pid, signal.SIGHUP)
         while new_child_pid == child_pid:
             try:
-                new_child_pid = self.configuration.pidfile.getpid()
+                new_child_pid = self.pidfile.getpid()
             except StaleState:
                 pass
             log.debug('waiting for restart ...')
             time.sleep(SLEEP)
         return 0
 
-
-    def drive(self):
-        """Manipulate a daemon via a pidfile, or become one ourselves.
-
-        Note that on principle we don't remove bad pidfiles, because they 
-        indicate a bug, and are potentially useful for debugging.
-
-        """
-    
-        if self.configuration.command == 'start':
-            try:
-                child_pid = self.configuration.pidfile.getpid()
-            except PIDFileMissing:
-                pass # best case
-            except State, state:
-                print "bad pidfile: %s" % state
-                raise SystemExit(1)
-            else:
-                print "daemon already running with pid %d" % child_pid
-                raise SystemExit(1)
-            self.start()
-    
-        elif self.configuration.command == 'status':
-            try:
-                child_pid = self.configuration.pidfile.getpid()
-                retcode = 0
-            except PIDFileMissing:
-                print "daemon not running (no pidfile)"
-                retcode = 0
-            except State, state:
-                print state
-                retcode = 1
-            else:
-                print "daemon running with pid %d" % child_pid
-            raise SystemExit(retcode)
-    
-        elif self.configuration.command in ('stop', 'restart'):
-            func = getattr(self, self.configuration.command)
-            try:
-                retcode = func()
-            except State, state:
-                print state
-                retcode = 1 
-            raise SystemExit(retcode)
-
-
-        return # if command is start we'll proceed with the program

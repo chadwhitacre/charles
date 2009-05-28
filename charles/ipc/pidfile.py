@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 
-from aspen.ipc import log
+from charles.ipc import log
 
 
 # Exceptions
@@ -42,7 +42,7 @@ class PIDFileError(StandardError):
         return "pidfile %s is %s" % (self.pidfile, self.desc)
 
 class PIDFileMissing(PIDFileError, StaleState):
-    desc = "missing (is aspen running?)"
+    desc = "missing (is django running?)"
 class PIDFileRestricted(PIDFileError, ErrorState):
     desc = "restricted (%s)" # instantiate and update this before raising
 class PIDFileEmpty(PIDFileError, ErrorState):
@@ -61,18 +61,18 @@ class PIDError(StandardError):
 
 class PIDDead(PIDError, StaleState):
     desc = "a dead pid (%d)"
-class PIDNotAspen(PIDError, StaleState):
-    desc = "the pid of a non-aspen process (%s)"
+class PIDNotDjango(PIDError, StaleState):
+    desc = "the pid of a non-django process (%s)"
 
 
 class PIDFile(object):
     """Model a pidfile.
     """
 
-    ASPEN = 'aspen' # factored out to ease testing
-    path = None     # path to the pidfile; set before using this object!
-    mode = 0644     # the permission bits on the pidfile
-    dirmode = 0755  # the permission bits on any directories created
+    DJANGO = 'django'   # factored out to ease testing
+    path = None         # path to the pidfile; set before using this object!
+    mode = 0644         # the permission bits on the pidfile
+    dirmode = 0755      # the permission bits on any directories created
 
     def __init__(self, path):
         self.path = path
@@ -102,7 +102,7 @@ class PIDFile(object):
     def getpid(self):
         """Return the PID in the pidfile at self.path as an int.
 
-        This is designed to be called by aspen as a daemon driver.
+        This is designed to be called by the management commands.
 
         Possible errors:
 
@@ -112,7 +112,7 @@ class PIDFile(object):
             PIDFileEmpty        the pidfile is empty
             PIDFileMangled      the pidfile is mangled
             PIDDead             the pid does not point to a live process
-            PIDNotAspen         the pid does not point to an aspen process
+            PIDNotDjango        the pid does not point to a django process
 
         """
    
@@ -149,10 +149,10 @@ class PIDFile(object):
         if nlines == 2:                                 # running
             #  PID  TT  STAT      TIME COMMAND
             #  45489  ??  S      0:02.42 /usr/local/bin/python /usr/local/bi...
-            if self.ASPEN is not None: # make allowances for testing
-                if self.ASPEN not in ps: # rough approximation
-                    log.debug("%s not in %s" % (self.ASPEN, ps))
-                    raise PIDNotAspen(self.path, pid)
+            if self.DJANGO is not None: # make allowances for testing
+                if self.DJANGO not in ps: # rough approximation
+                    log.debug("%s not in %s" % (self.DJANGO, ps))
+                    raise PIDNotDjango(self.path, pid)
 
         return pid
 
