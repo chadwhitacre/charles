@@ -8,24 +8,13 @@ import tempfile
 import traceback
 
 
-# Determine what platform we are on.
-# ==================================
-# Do this before importing our submodules so the information is available to 
-# them.
-
-if 'win32' in sys.platform:
-    WINDOWS = True
-else:
-    WINDOWS = False
+__version__ = '0.1' # our subpackages use this
+WINDOWS = 'win32' in sys.platform  # this also
 
 
 from charles.ipc import restarter
 from charles.ipc.pidfile import PIDFile
 from charles.server import Server
-
-
-#__version__ = '~~VERSION~~'
-__all__ = ['configuration', 'conf', 'paths', '']
 
 
 log = logging.getLogger('charles')
@@ -86,21 +75,10 @@ def main_loop(configuration):
 
 
 def main(argv=None):
-    """Configure safely and then run main loop safely.
+    """Run the main loop safely.
     """
-
-    if argv is None:
-        argv = sys.argv[1:]
-
     try:
-        configuration = configure(argv)
-    except ConfigurationError, err:
-        print >> sys.stderr, usage
-        print >> sys.stderr, err.msg
-        sys.exit(2)
-
-    try:
-        main_loop(configuration)
+        main_loop()
     except SystemExit, exc:
         if exc.code == 0:
             log_func = log.debug

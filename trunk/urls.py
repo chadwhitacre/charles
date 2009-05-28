@@ -3,6 +3,6 @@ from django.http import HttpResponse
 
 
 def view(request, *args, **kwargs):
-    return HttpResponse('Greetings, program!')
+    return HttpResponse('<p>Greetings, program!</p>')
 
 urlpatterns = patterns('', (r'^.*$', view))
