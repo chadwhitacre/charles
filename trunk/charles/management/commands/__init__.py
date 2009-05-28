@@ -17,7 +17,7 @@ from charles.ipc.pidfile import PIDFile
 # =======
 # This only gets written in CHILD of a daemon.
 
-pidpath = 'django.pid'
+pidpath = os.path.abspath('django.pid')
 pidfile = PIDFile(pidpath)
 pidfile = pidfile
 
