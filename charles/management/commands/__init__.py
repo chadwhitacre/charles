@@ -27,3 +27,4 @@ pidfile = pidfile
 
 root = os.getcwd()
 daemon = Daemon(pidfile, root)
+

@@ -4,12 +4,11 @@ import atexit
 import logging
 import os
 import sys
-import tempfile
 import traceback
 
 
-__version__ = '0.1' # our subpackages use this
-WINDOWS = 'win32' in sys.platform  # this also
+__version__ = '0.1'
+WINDOWS = 'win32' in sys.platform  # used in subpackages
 
 
 from charles.ipc import restarter
@@ -49,30 +48,6 @@ def absolutize_root(argv):
             argv[i] = '--root=%s' % os.path.realpath(root)
             break
     return argv
-
-
-def main_loop(configuration):
-    """Given a configuration object, do daemony things and go into a loop.
-    """
-    if restarter.PARENT:
-
-        argv = sys.argv[:]
-
-        if configuration.daemon is not None:
-            argv = absolutize_root(argv)
-            configuration.daemon.drive() # will daemonize or raise SystemExit
-
-        restarter.loop(argv)
-
-    else:
-        assert restarter.CHILD # sanity check
-
-        if configuration.daemon is not None:
-            configuration.pidfile.write() # only in CHILD of daemon
-            atexit.register(configuration.pidfile.remove)
-
-        server = Server(configuration)
-        server.start()
 
 
 def main(argv=None):

@@ -13,7 +13,6 @@ class Command(BaseCommand):
             restarter.loop(argv)
         else:
             assert restarter.CHILD # sanity check
-            import settings
-            server = Server(settings)
+            server = Server()
             server.start()
 

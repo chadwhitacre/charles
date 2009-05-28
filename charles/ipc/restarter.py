@@ -124,7 +124,7 @@ CHILD = _FLAG in os.environ         # True w/in child process
 PARENT = not CHILD                  # True w/in parent process
 EX_TEMPFAIL = 75                    # child's exit code to trigger restart
 MONITORING = False                  # whether we are monitoring the filesystem
-SLEEP = 1.0                         # seconds between filesystem checks
+SLEEP = 2.0                         # seconds between filesystem checks
 child = None                        # our only child
 SIGNAL = None                       # the signal we are handling; pass to child
 

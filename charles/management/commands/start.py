@@ -35,9 +35,7 @@ class Command(BaseCommand):
     
             pidfile.write() # only in CHILD of daemon
             atexit.register(pidfile.remove)
-    
-            import settings
-            server = Server(settings)
+            server = Server()
             server.start()
 
 
