@@ -9,6 +9,7 @@ restart, and status will raise SystemExit.
 """
 import os
 
+import charles
 from charles.ipc.daemon import Daemon
 from charles.ipc.pidfile import PIDFile
 
@@ -25,6 +26,7 @@ pidfile = pidfile
 # Daemon
 # ======
 
-root = os.getcwd()
-daemon = Daemon(pidfile, root)
+if not charles.WINDOWS:
+    root = os.getcwd()
+    daemon = Daemon(pidfile, root)
 
